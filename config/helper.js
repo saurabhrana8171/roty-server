@@ -5,44 +5,44 @@ var moment1 = require('moment-timezone');
 var path = require('path');
 var jwt = require('jsonwebtoken');
 // const chalk = require('chalk');
-const aws = require('aws-sdk');
-const multer = require('multer');
-const multerS3 = require('multer-s3');
+// const aws = require('aws-sdk');
+// const multer = require('multer');
+// const multerS3 = require('multer-s3');
 
 
-helper.upload_space = function (filepath) {
+// helper.upload_space = function (filepath) {
 
-	const spacesEndpoint = new aws.Endpoint('sgp1.digitaloceanspaces.com');
-	const s3 = new aws.S3({
-		endpoint: spacesEndpoint,
-		accessKeyId: 'RI3SH6NRY345ZF4PDM5L',
-		secretAccessKey: 'qkISEYWNA2jOe+RothynK7Wsiw+zaTfL80+lPvteKl8'
-	});
+// 	const spacesEndpoint = new aws.Endpoint('sgp1.digitaloceanspaces.com');
+// 	const s3 = new aws.S3({
+// 		endpoint: spacesEndpoint,
+// 		accessKeyId: 'RI3SH6NRY345ZF4PDM5L',
+// 		secretAccessKey: 'qkISEYWNA2jOe+RothynK7Wsiw+zaTfL80+lPvteKl8'
+// 	});
 
-	const upload = multer({
-		storage: multerS3({
-			s3: s3,
-			bucket: 'bhagya-milan/bhagya-milan-dev/' + filepath,
-			acl: 'public-read',
-			key: function (request, file, cb) {
-				//console.log("file--->>>", file);
-				let extArray = file.mimetype.split("/");
-				let extension = extArray[extArray.length - 1];
-				var fileExt = path.extname(file.originalname);
-				var fileName = file.originalname;
-				fileName = fileName.split(".");
-				fileName = fileName[0];
-				//fileName.splice(-1, 1);
-				//fileName.join('');
-				fileName = fileName.replace(" ", "-");
-				fileName = fileName + '-' + new Date().getTime();
-				var data = fileName + fileExt;
-				cb(null, data);
-			}
-		})
-	})
-	return upload;
-};
+// 	// const upload = multer({
+// 	// 	storage: multerS3({
+// 	// 		s3: s3,
+// 	// 		bucket: 'bhagya-milan/bhagya-milan-dev/' + filepath,
+// 	// 		acl: 'public-read',
+// 	// 		key: function (request, file, cb) {
+// 	// 			//console.log("file--->>>", file);
+// 	// 			let extArray = file.mimetype.split("/");
+// 	// 			let extension = extArray[extArray.length - 1];
+// 	// 			var fileExt = path.extname(file.originalname);
+// 	// 			var fileName = file.originalname;
+// 	// 			fileName = fileName.split(".");
+// 	// 			fileName = fileName[0];
+// 	// 			//fileName.splice(-1, 1);
+// 	// 			//fileName.join('');
+// 	// 			fileName = fileName.replace(" ", "-");
+// 	// 			fileName = fileName + '-' + new Date().getTime();
+// 	// 			var data = fileName + fileExt;
+// 	// 			cb(null, data);
+// 	// 		}
+// 	// 	})
+// 	// })
+// 	return upload;
+// };
 
 helper.pagination = (items, page, per_page) => {
 
