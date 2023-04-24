@@ -1,7 +1,28 @@
 const TransactionModel = require('../../models/TransactionModel');
+const CustomersModel = require('../../models/CustomersModel');
 const Helper = require('../../config/helper');
+const stripePayment = require('../../config/stripe');
 const stripkey = process.env.stripe
 const stripe = require('stripe')(stripkey);
+const { initializeApp } = require('firebase/app');
+const { getFirestore, collection, getDocs, doc, updateDoc } = require('firebase/firestore');
+const firebaseConfig = {
+  apiKey: process.env.firebaseApiKey,
+  authDomain: process.env.firebaseAuthDomain,
+  projectId: process.env.firebaseProjectId,
+  storageBucket: process.env.firebaseStorageBucket,
+  messagingSenderId: process.env.firebaseMessagingSenderId,
+  appId: process.env.firebaseAppId,
+  measurementId: process.env.firebaseMeasurementId
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+
+
+
+
+
 
 
 
@@ -10,28 +31,43 @@ module.exports = {
 
   stripeWebHook: async (req, res) => {
     try {
+
+
+
+      // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
+
+      var paymentIntent = req.body.data.object
+      var collection = 'users'
+      var collectionDocId = req.body.data.object.metadata.collectionDocId
       var alreadyExixts = await TransactionModel.exists({ txn: req.body.data.object.id })
       if (alreadyExixts) {
         console.log("This pi alrady exixts in database")
         return Helper.response(res, 422, "This is  pi already exixts in database");
       }
 
-      const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
+
       if (paymentIntent) {
         var transactionsDetails = {
-          mobileNumber: paymentIntent.metadata.mobileNumber ? paymentIntent.metadata.mobileNumber : '',
-          firstName: paymentIntent.metadata.firstName ? paymentIntent.metadata.firstName : '',
-          lastName: paymentIntent.metadata.lastName ? paymentIntent.metadata.lastName : '',
-          email: paymentIntent.metadata.email ? paymentIntent.metadata.email : '',
+          mobileNumber: req.body.data.object.metadata.mobileNumber ? req.body.data.object.metadata.mobileNumber : '',
+          firstName: req.body.data.object.metadata.firstName ? req.body.data.object.metadata.firstName : '',
+          lastName: req.body.data.object.metadata.lastName ? req.body.data.object.metadata.lastName : '',
+          email: req.body.data.object.metadata.email ? req.body.data.object.metadata.email : '',
           txn: paymentIntent.id,
           date: new Date(paymentIntent.created * 1000),
           status: paymentIntent.status,
-          amount: paymentIntent.amount / 100
+          amount: paymentIntent.plan.amount / 100
         }
+
+
 
         transactionsDetails.fullname = transactionsDetails.firstName + transactionsDetails.lastName.split(/\s/).join('')
         transactionsDetails.fullname = transactionsDetails.fullname.split(/\s/).join('')
         var savetransaction = await new TransactionModel(transactionsDetails).save()
+
+        if (collectionDocId) {
+          await updateFirebaseCollectionDoc('users', collectionDocId, req.body.data.object.metadata)
+        }
+
         return Helper.response(res, 200, " Save transactions");
 
       } else {
@@ -81,6 +117,65 @@ module.exports = {
         return Helper.response(res, 200, "No Transactions Found");
       } else {
         return Helper.response(res, 200, "All Transactions List", { List: result });
+      }
+
+    } catch (err) {
+      console.log(err)
+      return Helper.response(res, 500, " Server error.");
+    }
+  },
+
+  createPaymentLink: async (req, res) => {
+    try {
+
+      var { customerEmail, customerName, productName, productPrice, productCurrency, paymentMethodType, cardNumber, cardExpMonths, cardExpYear, cardCVC } = req.body
+
+      var findCustomer = await CustomersModel.findOne({ email: customerEmail })
+      if (!findCustomer || !findCustomer.customerId) {
+        var customerObject = await stripePayment.createCustomr(customerEmail, customerName)
+        var findCustomer = await CustomersModel.findOne({ email: customerEmail })
+      }
+
+      if (!findCustomer.productsId) {
+        const createProducts = await stripePayment.createProduct(productName, customerEmail)
+        findCustomer.productsId = createProducts.id
+      }
+
+      if (!findCustomer.priceId) {
+        const createPrices = await stripePayment.createPrice(findCustomer.productsId, productPrice, productCurrency, customerEmail)
+        findCustomer.priceId = createPrices.id
+      }
+
+      if (!findCustomer.paymentMethodId) {
+        const paymentMethods = await stripePayment.paymentMethod(findCustomer.customerId, paymentMethodType, cardNumber, cardExpMonths, cardExpYear, cardCVC, customerEmail)
+
+        findCustomer.paymentMethodId = paymentMethods.id
+      }
+
+      if (!findCustomer.subscriptionsId) {
+        const createSubscriptions = await stripePayment.createSubscription(findCustomer.customerId, findCustomer.paymentMethodId, findCustomer.priceId, customerEmail, req.body.metaData)
+
+        findCustomer.subscriptionsId = createSubscriptions.id
+      }
+
+      if (!findCustomer.subscriptionItemIds) {
+        const subscriptionItemIds = await stripePayment.subscriptionItemId(findCustomer.customerId, findCustomer.subscriptionsId, findCustomer.priceId, customerEmail)
+        findCustomer.subscriptionsId = subscriptionItemIds.id
+      }
+      var a = await stripe.paymentMethods.attach(findCustomer.paymentMethodId, { customer: findCustomer.customerId });
+
+      // const paymentMethod = await stripe.paymentMethods.update( a.id, {
+      //   metadata: {
+      //     'key1': 'value1',
+      //     'key2': 'value2'
+      //   }
+      // });
+
+
+      if (!a) {
+        return Helper.response(res, 200, "Failed");
+      } else {
+        return Helper.response(res, 200, "Success", { data: a });
       }
 
     } catch (err) {
@@ -224,6 +319,83 @@ async function createSerachObj(req) {
   };
 }
 
+async function createPaymentLinks(PRICE_ID) {
+
+  const paymentLink = await stripe.paymentLinks.create({
+    line_items: [{ price: PRICE_ID, quantity: 1 }],
+  });
+  console.log(paymentLink, "link")
+  return paymentLink
+}
+
+
+async function createPaymentIntent() {
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: 1099,
+    currency: 'usd',
+    payment_method_types: ['card'],
+    metadata: {
+      order_id: '6735',
+      name: '6735',
+      mob: '6735'
+
+    },
+    customer: 'cus_NImKaZkAWOKHEx'
+  });
+  return paymentIntent
+}
+
+async function paymentIntentConfirm() {
+  const paymentIntentConfirm = await stripe.paymentIntents.confirm(
+    paymentIntent.id,
+    { payment_method: 'pm_card_visa' }
+  );
+  return paymentIntentConfirm
+}
+
+async function createSubscription(customerId, paymentMethodId, priceId) {
 
 
 
+  // Attach payment method to customer
+  await stripe.paymentMethods.attach(paymentMethodId.id, { customer: customerId.id });
+
+  // Set payment method as default
+  await stripe.customers.update(customerId.id, { invoice_settings: { default_payment_method: paymentMethodId.id } });
+
+  // Create subscription
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId.id,
+    items: [{ price: priceId.id }],
+    expand: ['latest_invoice.payment_intent'],
+    trial_period_days: 7, // optional trial period
+    collection_method: 'charge_automatically', // automatic payments
+  });
+
+  return subscription
+
+}
+
+async function updateFirebaseCollectionDoc(collection, collectionDocId, metadata) {
+
+  const updateCollectionDocById = doc(db, collection, collectionDocId);
+  await updateDoc(updateCollectionDocById, {
+    payment: "true "
+  });
+
+  return
+}
+
+
+
+
+
+
+
+
+
+
+  //   const citiesCol = collection(db, 'users');
+  //   const citySnapshot = await getDocs(citiesCol);
+  // const cityList = citySnapshot.docs.map(doc => doc.data());
+  //   console.log(cityList.length)

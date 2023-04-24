@@ -8,6 +8,7 @@ const UserController = require('../../controllers/User/UserController');
 router.post('/stripe-weebhook',  UserController.stripeWebHook);
 router.get('/get-transactions',  UserController.getAllTransactions);
 router.get('/export-transactions',  UserController.exportAllTransactions);
+router.post('/create-paymenlink',  UserController.createPaymentLink);
 
 
 
