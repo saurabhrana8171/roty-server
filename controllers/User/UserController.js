@@ -32,18 +32,16 @@ module.exports = {
   stripeWebHook: async (req, res) => {
     try {
 
-
-
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
 
       var paymentIntent = req.body.data.object
       var collection = 'users'
       var collectionDocId = req.body.data.object.metadata.collectionDocId
       var alreadyExixts = await TransactionModel.exists({ txn: req.body.data.object.id })
-      if (alreadyExixts) {
-        console.log("This pi alrady exixts in database")
-        return Helper.response(res, 422, "This is  pi already exixts in database");
-      }
+      // if (alreadyExixts) {
+      //   console.log("This pi alrady exixts in database")
+      //   return Helper.response(res, 422, "This is  pi already exixts in database");
+      // }
 
 
       if (paymentIntent) {
@@ -65,7 +63,7 @@ module.exports = {
         var savetransaction = await new TransactionModel(transactionsDetails).save()
 
         if (collectionDocId) {
-          await updateFirebaseCollectionDoc('users', collectionDocId, req.body.data.object.metadata)
+          await updateFirebaseCollectionDoc('users', collectionDocId, req.body.data)
         }
 
         return Helper.response(res, 200, " Save transactions");
@@ -376,11 +374,13 @@ async function createSubscription(customerId, paymentMethodId, priceId) {
 
 }
 
-async function updateFirebaseCollectionDoc(collection, collectionDocId, metadata) {
+async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
+  // console.log(data.object)
 
   const updateCollectionDocById = doc(db, collection, collectionDocId);
   await updateDoc(updateCollectionDocById, {
-    payment: "true "
+  stripeData : data.object
+
   });
 
   return
