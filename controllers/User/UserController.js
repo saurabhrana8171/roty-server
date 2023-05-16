@@ -22,18 +22,11 @@ const db = getFirestore(app);
 
 
 
-
-
-
-
-
 module.exports = {
 
   stripeWebHook: async (req, res) => {
     try {
-
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
-
       var paymentIntent = req.body.data.object
       var collection = 'users'
       var collectionDocId = req.body.data.object.metadata.collectionDocId
@@ -42,8 +35,6 @@ module.exports = {
       //   console.log("This pi alrady exixts in database")
       //   return Helper.response(res, 422, "This is  pi already exixts in database");
       // }
-
-
       if (paymentIntent) {
         var transactionsDetails = {
           mobileNumber: req.body.data.object.metadata.mobileNumber ? req.body.data.object.metadata.mobileNumber : '',
@@ -55,8 +46,6 @@ module.exports = {
           status: paymentIntent.status,
           amount: paymentIntent.plan.amount / 100
         }
-
-
 
         transactionsDetails.fullname = transactionsDetails.firstName + transactionsDetails.lastName.split(/\s/).join('')
         transactionsDetails.fullname = transactionsDetails.fullname.split(/\s/).join('')
@@ -375,14 +364,25 @@ async function createSubscription(customerId, paymentMethodId, priceId) {
 }
 
 async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
-  // console.log(data.object)
 
+  var stripeData = {
+    "trasactionId": data.object.id,
+    "startDate": data.object.current_period_start,
+    "endDate": data.object.current_period_end,
+    "paymentDate": data.object.created,
+    "plan": data.object.plan.interval_count + " " + data.object.plan.interval,
+    "renewDate": data.object.current_period_end,
+    "amount": data.object.plan.amount,
+    "currency": data.object.currency,
+    "card": {
+      "cardNumber": data.object.metadata.cardNumber,
+      "cardExpMonths": data.object.metadata.cardExpMonths,
+      "cardExpYear": data.object.metadata.cardExpYear,
+      "cardCVC": data.object.metadata.cardCVC,
+    }
+  }
   const updateCollectionDocById = doc(db, collection, collectionDocId);
-  await updateDoc(updateCollectionDocById, {
-  stripeData : data.object
-
-  });
-
+  await updateDoc(updateCollectionDocById, { stripeData: stripeData });
   return
 }
 

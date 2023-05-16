@@ -89,7 +89,12 @@ module.exports = {
                 'firstName': metaData.firstName,
                 'lastName':metaData.lastName,
                 'email':metaData.email,
-                'collectionDocId':metaData.fireBaseCollectionDocId
+                'collectionDocId':metaData.fireBaseCollectionDocId,
+                "cardNumber":metaData.cardNumber ,
+                "cardExpMonths": metaData.cardExpMonths,
+                "cardExpYear": metaData.cardExpYear,
+                "cardCVC": metaData.cardCVC,
+
 
               }
         });
