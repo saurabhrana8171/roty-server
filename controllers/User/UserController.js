@@ -26,6 +26,7 @@ module.exports = {
 
   stripeWebHook: async (req, res) => {
     try {
+      console.log("hi webhook")
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
       var paymentIntent = req.body.data.object
       var collection = 'users'
@@ -62,7 +63,7 @@ module.exports = {
       }
     } catch (err) {
       console.log(err)
-      return Helper.response(res, 500, " Server error.");
+      return Helper.response(res, 500, " Server error.",{err});
     }
   },
   getAllTransactions: async (req, res) => {
