@@ -63,7 +63,7 @@ module.exports = {
       }
     } catch (err) {
       console.log(err)
-      return Helper.response(res, 500, " Server error.",{err});
+      return Helper.response(res, 500, " Server error.", { err });
     }
   },
   getAllTransactions: async (req, res) => {
@@ -152,6 +152,8 @@ module.exports = {
       }
       var a = await stripe.paymentMethods.attach(findCustomer.paymentMethodId, { customer: findCustomer.customerId });
 
+      var deleteDetails = await CustomersModel.remove({ email: customerEmail })
+
       // const paymentMethod = await stripe.paymentMethods.update( a.id, {
       //   metadata: {
       //     'key1': 'value1',
@@ -172,7 +174,52 @@ module.exports = {
     }
   },
 
+  cancelSuscription: async (req, res) => {
+    try {
 
+      var { suscriptionId } = req.body
+      const updatedSubscription = await stripe.subscriptions.update(suscriptionId, {
+        cancel_at_period_end: true,
+      });
+      return Helper.response(res, 200, "stop auto-renewal");
+    } catch (err) {
+      console.log(err)
+      return Helper.response(res, 500, " Server error.");
+    }
+  },
+
+  getSuscription: async (req, res) => {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(req.query.suscriptionId);
+      if (subscription) {
+        return Helper.response(res, 200, "Subscription Detilas", { detials: subscription });
+      } else {
+        return Helper.response(res, 422, "something went wron");
+      }
+
+
+    } catch (err) {
+      console.log(err)
+      return Helper.response(res, 500, " Server error.");
+    }
+  },
+
+
+   renewSuscription: async (req, res) => {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(req.query.suscriptionId);
+      if (subscription) {
+        return Helper.response(res, 200, "Subscription Detilas", { detials: subscription });
+      } else {
+        return Helper.response(res, 422, "something went wron");
+      }
+
+
+    } catch (err) {
+      console.log(err)
+      return Helper.response(res, 500, " Server error.");
+    }
+  },
 
 
 
@@ -306,7 +353,6 @@ async function createSerachObj(req) {
     console.log("in catch block", err);
   };
 }
-
 async function createPaymentLinks(PRICE_ID) {
 
   const paymentLink = await stripe.paymentLinks.create({
@@ -315,8 +361,6 @@ async function createPaymentLinks(PRICE_ID) {
   console.log(paymentLink, "link")
   return paymentLink
 }
-
-
 async function createPaymentIntent() {
   const paymentIntent = await stripe.paymentIntents.create({
     amount: 1099,
@@ -332,7 +376,6 @@ async function createPaymentIntent() {
   });
   return paymentIntent
 }
-
 async function paymentIntentConfirm() {
   const paymentIntentConfirm = await stripe.paymentIntents.confirm(
     paymentIntent.id,
@@ -340,7 +383,6 @@ async function paymentIntentConfirm() {
   );
   return paymentIntentConfirm
 }
-
 async function createSubscription(customerId, paymentMethodId, priceId) {
 
 
@@ -363,7 +405,6 @@ async function createSubscription(customerId, paymentMethodId, priceId) {
   return subscription
 
 }
-
 async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
 
   var stripeData = {
