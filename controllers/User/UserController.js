@@ -26,7 +26,6 @@ module.exports = {
 
   stripeWebHook: async (req, res) => {
     try {
-      console.log("hi webhook")
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
       var paymentIntent = req.body.data.object
       var collection = 'users'
@@ -52,8 +51,16 @@ module.exports = {
         transactionsDetails.fullname = transactionsDetails.fullname.split(/\s/).join('')
         var savetransaction = await new TransactionModel(transactionsDetails).save()
 
+        if (req.body.data) {
+          var data = {
+            subscriptionId: req.body.data.object.id,
+            renewal_date: req.body.data.object.current_period_end,
+            status: "active"
+
+          }
+        }
         if (collectionDocId) {
-          await updateFirebaseCollectionDoc('users', collectionDocId, req.body.data)
+          await updateFirebaseCollectionDoc('users', collectionDocId, data)
         }
 
         return Helper.response(res, 200, " Save transactions");
@@ -66,6 +73,7 @@ module.exports = {
       return Helper.response(res, 500, " Server error.", { err });
     }
   },
+
   getAllTransactions: async (req, res) => {
     try {
 
@@ -91,6 +99,7 @@ module.exports = {
       return Helper.response(res, 500, " Server error.");
     }
   },
+
   exportAllTransactions: async (req, res) => {
     try {
 
@@ -181,6 +190,23 @@ module.exports = {
       const updatedSubscription = await stripe.subscriptions.update(suscriptionId, {
         cancel_at_period_end: true,
       });
+
+      if (updatedSubscription) {
+        var data = {
+          subscriptionId: updatedSubscription.id,
+          renewal_date: updatedSubscription.current_period_end,
+          status: "stop"
+
+        }
+      }
+
+
+
+      if (collectionDocId) {
+        await updateFirebaseCollectionDoc('users', collectionDocId, data)
+      }
+
+
       return Helper.response(res, 200, "stop auto-renewal");
     } catch (err) {
       console.log(err)
@@ -197,15 +223,13 @@ module.exports = {
         return Helper.response(res, 422, "something went wron");
       }
 
-
     } catch (err) {
       console.log(err)
       return Helper.response(res, 500, " Server error.");
     }
   },
 
-
-   renewSuscription: async (req, res) => {
+  renewSuscription: async (req, res) => {
     try {
       const subscription = await stripe.subscriptions.retrieve(req.query.suscriptionId);
       if (subscription) {
@@ -221,9 +245,99 @@ module.exports = {
     }
   },
 
+  subscriptionUpdate: async (req, res) => {
+    try {
+
+      var event = req.body;
+
+
+      if (event.type === 'customer.subscription.paused') {
+
+        var data = {
+          subscriptionId: req.body.data.object.id,
+          renewal_date: req.body.data.object.current_period_end,
+          status: 'paused'
+        }
+
+      } else {
+        var data = {
+          subscriptionId: req.body.data.object.id,
+          renewal_date: req.body.data.object.current_period_end,
+          status: req.body.data.object.status
+        }
+      }
+
+      var collectionDocId = req.body.data.object.metadata.collectionDocId
+
+      if (collectionDocId) {
+        await updateFirebaseCollectionDoc('users', collectionDocId, data)
+      }
+
+      return Helper.response(res, 200, "Subscription Details Update");
+
+    } catch (err) {
+      console.log(err)
+      return Helper.response(res, 500, " Server error.", { err });
+    }
+  },
+
+
+  invoice_payment_failed: async (req, res) => {
+    try {
+
+      var event = req.body;
+
+      //  var event = {
+      //   "id": "evt_1ABCDEFGHIJKLMN",
+      //   "object": "event",
+      //   "api_version": "2020-08-27",
+      //   "created": 1625345032,
+      //   "data": {
+      //     "object": {
+      //       "id": "in_1PQRSTUVWXYZ",
+      //       "object": "invoice",
+      //       "amount_due": 1000,
+      //       "customer": "cus_1234567890",
+      //       "subscription": "sub_1NPUDQHELCnzH5PnJD7B2oNC",
+      //       "status": "failed",
+      //       // अन्य इनवॉइस डेटा फ़ील्ड्स
+      //     }
+      //   },
+      //   // अन्य इवेंट डेटा फ़ील्ड्स
+      // }
+
+
+      if (event) {
+        const invoice = event.data.object;
+        const subscriptionId = invoice.subscription;
+        var subscriptionData = await stripe.subscriptions.retrieve(subscriptionId)
+        if (subscriptionData) {
+          var data = {
+            subscriptionId: subscriptionData.id,
+            renewal_date: subscriptionData.current_period_end,
+            status: subscriptionData.status
+          }
+          var collectionDocId = subscriptionData.metadata.collectionDocId
+          if (collectionDocId) {
+            await updateFirebaseCollectionDoc('users', collectionDocId, data)
+          }
+        }
+      }
+
+
+      return Helper.response(res, 200, "Subscription Details Update");
+
+    } catch (err) {
+      console.log(err)
+      return Helper.response(res, 500, " Server error.", { err });
+    }
+  },
+
+
 
 
 }
+
 
 async function createSerachObj(req) {
   try {
@@ -407,24 +521,24 @@ async function createSubscription(customerId, paymentMethodId, priceId) {
 }
 async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
 
-  var stripeData = {
-    "trasactionId": data.object.id,
-    "startDate": data.object.current_period_start,
-    "endDate": data.object.current_period_end,
-    "paymentDate": data.object.created,
-    "plan": data.object.plan.interval_count + " " + data.object.plan.interval,
-    "renewDate": data.object.current_period_end,
-    "amount": data.object.plan.amount,
-    "currency": data.object.currency,
-    "card": {
-      "cardNumber": data.object.metadata.cardNumber,
-      "cardExpMonths": data.object.metadata.cardExpMonths,
-      "cardExpYear": data.object.metadata.cardExpYear,
-      "cardCVC": data.object.metadata.cardCVC,
-    }
-  }
+  // var stripeData = {
+  //   "trasactionId": data.object.id,
+  //   "startDate": data.object.current_period_start,
+  //   "endDate": data.object.current_period_end,
+  //   "paymentDate": data.object.created,
+  //   "plan": data.object.plan.interval_count + " " + data.object.plan.interval,
+  //   "renewDate": data.object.current_period_end,
+  //   "amount": data.object.plan.amount,
+  //   "currency": data.object.currency,
+  //   "card": {
+  //     "cardNumber": data.object.metadata.cardNumber,
+  //     "cardExpMonths": data.object.metadata.cardExpMonths,
+  //     "cardExpYear": data.object.metadata.cardExpYear,
+  //     "cardCVC": data.object.metadata.cardCVC,
+  //   }
+  // }
   const updateCollectionDocById = doc(db, collection, collectionDocId);
-  await updateDoc(updateCollectionDocById, { stripeData: stripeData });
+  await updateDoc(updateCollectionDocById, { stripeData: data });
   return
 }
 
@@ -435,9 +549,3 @@ async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
 
 
 
-
-
-  //   const citiesCol = collection(db, 'users');
-  //   const citySnapshot = await getDocs(citiesCol);
-  // const cityList = citySnapshot.docs.map(doc => doc.data());
-  //   console.log(cityList.length)

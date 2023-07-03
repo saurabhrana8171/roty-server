@@ -11,12 +11,13 @@ router.get('/export-transactions',  UserController.exportAllTransactions);
 router.post('/create-paymenlink',  UserController.createPaymentLink);
 router.post('/cancel-subscription',  UserController.cancelSuscription);
 router.get('/get-subscription-details',  UserController.getSuscription);
-
+router.post('/payment-failed',  UserController.subscriptionUpdate);
+router.post('/invoice_payment_failed',  UserController.invoice_payment_failed);
 
 
 module.exports = router
 
-
+    
 
 
 
