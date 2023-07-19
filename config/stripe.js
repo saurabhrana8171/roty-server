@@ -36,15 +36,15 @@ module.exports = {
         // console.log("2")
         return product
     },
-    async createPrice(productID, productPrice, productCurrency, customerEmail) {
+    async createPrice(productID, productPrice, productCurrency, customerEmail, durationInDays) {
 
         const price = await stripe.prices.create({
             unit_amount_decimal: productPrice,
             currency: productCurrency,
             recurring: {
-                interval: 'month',
-                interval_count: 4
-            },
+                interval: 'day', // Set the interval to 'day' for daily subscription
+                interval_count: durationInDays, // Set the duration in days
+              },
             product: productID,
         });
 

@@ -26,6 +26,8 @@ module.exports = {
 
   stripeWebHook: async (req, res) => {
     try {
+
+      console.log("hhi")
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
       var paymentIntent = req.body.data.object
       var collection = 'users'
@@ -125,7 +127,7 @@ module.exports = {
   createPaymentLink: async (req, res) => {
     try {
 
-      var { customerEmail, customerName, productName, productPrice, productCurrency, paymentMethodType, cardNumber, cardExpMonths, cardExpYear, cardCVC } = req.body
+      var { customerEmail, customerName, productName, productPrice, productCurrency, paymentMethodType, cardNumber, cardExpMonths, cardExpYear, cardCVC, durationInDays } = req.body
 
       var findCustomer = await CustomersModel.findOne({ email: customerEmail })
       if (!findCustomer || !findCustomer.customerId) {
@@ -139,7 +141,7 @@ module.exports = {
       }
 
       if (!findCustomer.priceId) {
-        const createPrices = await stripePayment.createPrice(findCustomer.productsId, productPrice, productCurrency, customerEmail)
+        const createPrices = await stripePayment.createPrice(findCustomer.productsId, productPrice, productCurrency, customerEmail,durationInDays)
         findCustomer.priceId = createPrices.id
       }
 
@@ -186,7 +188,7 @@ module.exports = {
   cancelSuscription: async (req, res) => {
     try {
 
-      var { suscriptionId } = req.body
+      var { suscriptionId ,collectionDocId} = req.body
       const updatedSubscription = await stripe.subscriptions.update(suscriptionId, {
         cancel_at_period_end: true,
       });
@@ -220,7 +222,7 @@ module.exports = {
       if (subscription) {
         return Helper.response(res, 200, "Subscription Detilas", { detials: subscription });
       } else {
-        return Helper.response(res, 422, "something went wron");
+        return Helper.response(res, 422, "something went wrong");
       }
 
     } catch (err) {
