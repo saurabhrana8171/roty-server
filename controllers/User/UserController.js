@@ -330,7 +330,7 @@ module.exports = {
         status: subscription.status,
         autoRenewalStatus: false
       };
-      const collectionDocId = req.body?.data?.object?.metadata?.collectionDocId;
+      const collectionDocId = req.body.data.object.metadata.collectionDocId;
       if (collectionDocId) {
         await updateFirebaseCollectionDoc('users', collectionDocId, data);
       }
