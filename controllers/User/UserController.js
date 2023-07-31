@@ -328,8 +328,9 @@ module.exports = {
         startDate: subscription.start_date,
         renewal_date: subscription.current_period_end,
         status: subscription.status,
-        autoRenewalStatus: false
+        autoRenewalStatus: subscription.cancel_at_period_end
       };
+
       const collectionDocId = req.body.data.object.metadata.collectionDocId;
       if (collectionDocId) {
         await updateFirebaseCollectionDoc('users', collectionDocId, data);
