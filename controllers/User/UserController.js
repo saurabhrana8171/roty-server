@@ -315,7 +315,7 @@ module.exports = {
 
   subscriptionUpdate: async (req, res) => {
     try {
-      const subscriptionId = req.body?.data?.object?.id;
+      const subscriptionId =req.body.data.object.id;
       if (!subscriptionId) {
         return Helper.response(res, 422, "subscriptionId wrong");
       }
