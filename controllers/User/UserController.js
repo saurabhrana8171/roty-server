@@ -54,12 +54,35 @@ module.exports = {
         var savetransaction = await new TransactionModel(transactionsDetails).save()
 
         if (req.body.data) {
-          var data = {
-            subscriptionId: req.body.data.object.id,
-            renewal_date: req.body.data.object.current_period_end,
-            status: "active"
+          // var data = {
+          //   subscriptionId: req.body.data.object.id,
+          //   renewal_date: req.body.data.object.current_period_end,
+          //   status: "active"
 
+          // }
+
+          const subscription = await stripe.subscriptions.retrieve(req.body.data.object.id);
+          if (!subscription) {
+            return Helper.response(res, 422, "data not found");
           }
+    
+          
+          if(subscription.cancel_at_period_end==false){
+            var autoRenewalStatusCurrentstatus = true
+          }else{
+            var autoRenewalStatusCurrentstatus = false
+          }
+    
+
+          const data = {
+            subscriptionId: subscription.id,
+            startDate: subscription.start_date,
+            renewal_date: subscription.current_period_end,
+            status: subscription.status,
+            autoRenewalStatus: autoRenewalStatusCurrentstatus,
+            durationInDays:subscription.plan.interval_count
+          };
+    
         }
         if (collectionDocId) {
           await updateFirebaseCollectionDoc('users', collectionDocId, data)
@@ -323,14 +346,25 @@ module.exports = {
       if (!subscription) {
         return Helper.response(res, 422, "data not found");
       }
+
+      
+      if(subscription.cancel_at_period_end==false){
+        var autoRenewalStatusCurrentstatus = true
+      }else{
+        var autoRenewalStatusCurrentstatus = false
+      }
+
+
       const data = {
         subscriptionId: subscription.id,
         startDate: subscription.start_date,
         renewal_date: subscription.current_period_end,
         status: subscription.status,
-        autoRenewalStatus: subscription.cancel_at_period_end
+        autoRenewalStatus: autoRenewalStatusCurrentstatus,
+        durationInDays:subscription.plan.interval_count
       };
 
+    
       const collectionDocId = req.body.data.object.metadata.collectionDocId;
       if (collectionDocId) {
         await updateFirebaseCollectionDoc('users', collectionDocId, data);
