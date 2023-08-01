@@ -5,7 +5,7 @@ const stripePayment = require('../../config/stripe');
 const stripkey = process.env.stripe
 const stripe = require('stripe')(stripkey);
 const { initializeApp } = require('firebase/app');
-const { getFirestore, collection, getDocs, doc, updateDoc } = require('firebase/firestore');
+const { getFirestore, collection, getDocs, doc, getDoc, updateDoc } = require('firebase/firestore');
 const firebaseConfig = {
   apiKey: process.env.firebaseApiKey,
   authDomain: process.env.firebaseAuthDomain,
@@ -27,7 +27,7 @@ module.exports = {
   stripeWebHook: async (req, res) => {
     try {
 
-     
+
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
       var paymentIntent = req.body.data.object
       var collection = 'users'
@@ -65,14 +65,14 @@ module.exports = {
           if (!subscription) {
             return Helper.response(res, 422, "data not found");
           }
-    
-          
-          if(subscription.cancel_at_period_end==false){
+
+
+          if (subscription.cancel_at_period_end == false) {
             var autoRenewalStatusCurrentstatus = true
-          }else{
+          } else {
             var autoRenewalStatusCurrentstatus = false
           }
-    
+
 
           var data = {
             subscriptionId: subscription.id,
@@ -80,9 +80,9 @@ module.exports = {
             renewal_date: subscription.current_period_end,
             status: subscription.status,
             autoRenewalStatus: autoRenewalStatusCurrentstatus,
-            durationInDays:subscription.plan.interval_count
+            durationInDays: subscription.plan.interval_count
           };
-    
+
         }
         if (collectionDocId) {
           await updateFirebaseCollectionDoc('users', collectionDocId, data)
@@ -270,75 +270,10 @@ module.exports = {
     }
   },
 
-  //http://54.64.43.5/api/v1/payment-failed
-
-  // subscriptionUpdate: async (req, res) => {
-  //   try {
-
-
-  //     const subscriptionId = req.body.data.object.id;
-  //     if (!subscriptionId) {
-  //       return Helper.response(res, 422, "subscriptionId wrong");
-  //     }
-
-  //     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  //     if (!subscription) {
-  //       return Helper.response(res, 422, "data not found");
-  //     }
-
-  //     var data = {
-  //       subscriptionId: subscription.id,
-  //       startDate: subscription.start_date,
-  //       renewal_date: subscription.current_period_end,
-  //       status: subscription.status,
-  //       autoRenewalStatus: false
-
-  //     }
-  //     var collectionDocId = req.body.data.object.metadata.collectionDocId
-  //     if (collectionDocId) {
-  //       await updateFirebaseCollectionDoc('users', collectionDocId, data)
-  //     }
-
-  //     return Helper.response(res, 200, "Subscription Details Update");
-
-
-
-
-  //     // var event = req.body;
-  //     // if (event.type === 'customer.subscription.paused') {
-
-  //     //   var data = {
-  //     //     subscriptionId: req.body.data.object.id,
-  //     //     renewal_date: req.body.data.object.current_period_end,
-  //     //     status: 'paused'
-  //     //   }
-
-  //     // } else {
-  //     //   var data = {
-  //     //     subscriptionId: req.body.data.object.id,
-  //     //     renewal_date: req.body.data.object.current_period_end,
-  //     //     status: req.body.data.object.status
-  //     //   }
-  //     // }
-
-  //     // var collectionDocId = req.body.data.object.metadata.collectionDocId
-
-  //     // if (collectionDocId) {
-  //     //   await updateFirebaseCollectionDoc('users', collectionDocId, data)
-  //     // }
-
-  //     // return Helper.response(res, 200, "Subscription Details Update");
-
-  //   } catch (err) {
-  //     console.log(err)
-  //     return Helper.response(res, 500, " Server error.", { err });
-  //   }
-  // },
-
 
   subscriptionUpdate: async (req, res) => {
     try {
-      const subscriptionId =req.body.data.object.id;
+      const subscriptionId = req.body.data.object.id;
       if (!subscriptionId) {
         return Helper.response(res, 422, "subscriptionId wrong");
       }
@@ -347,10 +282,16 @@ module.exports = {
         return Helper.response(res, 422, "data not found");
       }
 
-      
-      if(subscription.cancel_at_period_end==false){
+
+      var userData = await getDocumentById('users', req.body.data.object.metadata.collectionDocId);
+
+      if (userData.stripeData.subscriptionId != subscription.id) {
+        return Helper.response(res, 200, "Wevhook call for old subscriptions");
+      }
+
+      if (subscription.cancel_at_period_end == false) {
         var autoRenewalStatusCurrentstatus = true
-      }else{
+      } else {
         var autoRenewalStatusCurrentstatus = false
       }
 
@@ -361,10 +302,10 @@ module.exports = {
         renewal_date: subscription.current_period_end,
         status: subscription.status,
         autoRenewalStatus: autoRenewalStatusCurrentstatus,
-        durationInDays:subscription.plan.interval_count
+        durationInDays: subscription.plan.interval_count
       };
 
-    
+
       const collectionDocId = req.body.data.object.metadata.collectionDocId;
       if (collectionDocId) {
         await updateFirebaseCollectionDoc('users', collectionDocId, data);
@@ -375,7 +316,7 @@ module.exports = {
       return Helper.response(res, 500, "Server error.", { err });
     }
   },
-  
+
 
   invoice_payment_failed: async (req, res) => {
     try {
@@ -437,6 +378,9 @@ module.exports = {
       const startDate = new Date(subscription.start_date * 1000);
       const endDate = new Date(subscription.current_period_end * 1000);
       const autoRenewalStatus = !subscription.cancel_at_period_end;
+
+
+
 
       let status;
       if (subscription.status === "active") {
@@ -659,30 +603,25 @@ async function createSubscription(customerId, paymentMethodId, priceId) {
 
 }
 async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
-
-  // var stripeData = {
-  //   "trasactionId": data.object.id,
-  //   "startDate": data.object.current_period_start,
-  //   "endDate": data.object.current_period_end,
-  //   "paymentDate": data.object.created,
-  //   "plan": data.object.plan.interval_count + " " + data.object.plan.interval,
-  //   "renewDate": data.object.current_period_end,
-  //   "amount": data.object.plan.amount,
-  //   "currency": data.object.currency,
-  //   "card": {
-  //     "cardNumber": data.object.metadata.cardNumber,
-  //     "cardExpMonths": data.object.metadata.cardExpMonths,
-  //     "cardExpYear": data.object.metadata.cardExpYear,
-  //     "cardCVC": data.object.metadata.cardCVC,
-  //   }
-  // }
   const updateCollectionDocById = doc(db, collection, collectionDocId);
   await updateDoc(updateCollectionDocById, { stripeData: data });
   return
 }
 
+async function getDocumentById(collectionName, documentId) {
+  try {
+    const docRef = doc(db, collectionName, documentId);
+    const docSnap = await getDoc(docRef);
 
-
+    if (docSnap.exists()) {
+      console.log('Document data:', docSnap.data());
+    } else {
+      console.log('Document not found!');
+    }
+  } catch (error) {
+    console.error('Error fetching document:', error);
+  }
+}
 
 
 
