@@ -27,7 +27,7 @@ module.exports = {
   stripeWebHook: async (req, res) => {
     try {
 
-      console.log("hhi")
+     
       // const paymentIntent = await stripe.paymentIntents.retrieve(req.body.data.object.id);
       var paymentIntent = req.body.data.object
       var collection = 'users'
@@ -74,7 +74,7 @@ module.exports = {
           }
     
 
-          const data = {
+          var data = {
             subscriptionId: subscription.id,
             startDate: subscription.start_date,
             renewal_date: subscription.current_period_end,
