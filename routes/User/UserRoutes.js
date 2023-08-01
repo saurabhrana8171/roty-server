@@ -11,8 +11,8 @@ router.get('/export-transactions',  UserController.exportAllTransactions);
 router.post('/create-paymenlink',  UserController.createPaymentLink);
 router.post('/cancel-subscription',  UserController.cancelSuscription);
 router.get('/get-subscription-details',  UserController.getSuscription);
-router.post('/payment-failed',  UserController.subscriptionUpdate);
-router.post('/invoice_payment_failed',  UserController.invoice_payment_failed);
+router.post('/any-thing-update',  UserController.subscriptionUpdate);
+// router.post('/invoice_payment_failed',  UserController.invoice_payment_failed);
 router.get('/get-auto-payments-status',  UserController.getSubAutoRenewalDetails);
 
 

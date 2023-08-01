@@ -269,11 +269,11 @@ module.exports = {
       return Helper.response(res, 500, " Server error.");
     }
   },
-
-//http://54.64.43.5/api/v1/invoice_payment_failed
+  // http://54.64.43.5/api/v1/invoice_payment_failed
   subscriptionUpdate: async (req, res) => {
     try {
       const subscriptionId = req.body.data.object.id;
+
       if (!subscriptionId) {
         return Helper.response(res, 422, "subscriptionId wrong");
       }
@@ -315,58 +315,57 @@ module.exports = {
   },
 
 
-  invoice_payment_failed: async (req, res) => {
-    try {
+  // invoice_payment_failed: async (req, res) => {
+  //   try {
 
-      var event = req.body;
+  //     var event = req.body;
 
-      console.log("2")
-
-      //  var event = {
-      //   "id": "evt_1ABCDEFGHIJKLMN",
-      //   "object": "event",
-      //   "api_version": "2020-08-27",
-      //   "created": 1625345032,
-      //   "data": {
-      //     "object": {
-      //       "id": "in_1PQRSTUVWXYZ",
-      //       "object": "invoice",
-      //       "amount_due": 1000,
-      //       "customer": "cus_1234567890",
-      //       "subscription": "sub_1NPUDQHELCnzH5PnJD7B2oNC",
-      //       "status": "failed",
-      //       // अन्य इनवॉइस डेटा फ़ील्ड्स
-      //     }
-      //   },
-      //   // अन्य इवेंट डेटा फ़ील्ड्स
-      // }
-
-
-      if (event) {
-        const invoice = event.data.object;
-        const subscriptionId = invoice.subscription;
-        var subscriptionData = await stripe.subscriptions.retrieve(subscriptionId)
-        if (subscriptionData) {
-          var data = {
-            subscriptionId: subscriptionData.id,
-            renewal_date: subscriptionData.current_period_end,
-            status: subscriptionData.status
-          }
-          var collectionDocId = subscriptionData.metadata.collectionDocId
-          if (collectionDocId) {
-            await updateFirebaseCollectionDoc('users', collectionDocId, data)
-          }
-        }
-      }
+    
+  //     //  var event = {
+  //     //   "id": "evt_1ABCDEFGHIJKLMN",
+  //     //   "object": "event",
+  //     //   "api_version": "2020-08-27",
+  //     //   "created": 1625345032,
+  //     //   "data": {
+  //     //     "object": {
+  //     //       "id": "in_1PQRSTUVWXYZ",
+  //     //       "object": "invoice",
+  //     //       "amount_due": 1000,
+  //     //       "customer": "cus_1234567890",
+  //     //       "subscription": "sub_1NPUDQHELCnzH5PnJD7B2oNC",
+  //     //       "status": "failed",
+  //     //       // अन्य इनवॉइस डेटा फ़ील्ड्स
+  //     //     }
+  //     //   },
+  //     //   // अन्य इवेंट डेटा फ़ील्ड्स
+  //     // }
 
 
-      return Helper.response(res, 200, "Subscription Details Update");
+  //     if (event) {
+  //       const invoice = event.data.object;
+  //       const subscriptionId = invoice.subscription;
+  //       var subscriptionData = await stripe.subscriptions.retrieve(subscriptionId)
+  //       if (subscriptionData) {
+  //         var data = {
+  //           subscriptionId: subscriptionData.id,
+  //           renewal_date: subscriptionData.current_period_end,
+  //           status: subscriptionData.status
+  //         }
+  //         var collectionDocId = subscriptionData.metadata.collectionDocId
+  //         if (collectionDocId) {
+  //           await updateFirebaseCollectionDoc('users', collectionDocId, data)
+  //         }
+  //       }
+  //     }
 
-    } catch (err) {
-      console.log(err)
-      return Helper.response(res, 500, " Server error.", { err });
-    }
-  },
+
+  //     return Helper.response(res, 200, "Subscription Details Update");
+
+  //   } catch (err) {
+  //     console.log(err)
+  //     return Helper.response(res, 500, " Server error.", { err });
+  //   }
+  // },
 
   getSubAutoRenewalDetails: async (req, res) => {
     try {
