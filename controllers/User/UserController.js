@@ -270,7 +270,7 @@ module.exports = {
     }
   },
 
-
+//http://54.64.43.5/api/v1/invoice_payment_failed
   subscriptionUpdate: async (req, res) => {
     try {
       const subscriptionId = req.body.data.object.id;
@@ -281,10 +281,7 @@ module.exports = {
       if (!subscription) {
         return Helper.response(res, 422, "data not found");
       }
-
-
       var userData = await getDocumentById('users', req.body.data.object.metadata.collectionDocId);
-
       if (userData.stripeData.subscriptionId != subscription.id) {
         return Helper.response(res, 200, "Wevhook call for old subscriptions");
       }
@@ -614,7 +611,8 @@ async function getDocumentById(collectionName, documentId) {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      console.log('Document data:', docSnap.data());
+      // console.log('Document data:', docSnap.data());
+      return docSnap.data()
     } else {
       console.log('Document not found!');
     }
