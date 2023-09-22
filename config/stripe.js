@@ -44,7 +44,7 @@ module.exports = {
             recurring: {
                 interval: 'day', // Set the interval to 'day' for daily subscription
                 interval_count: durationInDays, // Set the duration in days
-              },
+            },
             product: productID,
         });
 
@@ -55,8 +55,17 @@ module.exports = {
     },
     async paymentMethod(customerId, paymentMethodType, cardNumber, cardExpMonths, cardExpYear, cardCVC, customerEmail) {
 
-        var paymentMethod = await stripe.paymentMethods.create({
-            type: paymentMethodType,
+        // var paymentMethod = await stripe.paymentMethods.create({
+        //     type: paymentMethodType,
+        //     card: {
+        //         number: cardNumber,
+        //         exp_month: cardExpMonths,
+        //         exp_year: cardExpYear,
+        //         cvc: cardCVC,
+        //     },
+        // });
+
+        const token = await stripe.tokens.create({
             card: {
                 number: cardNumber,
                 exp_month: cardExpMonths,
@@ -67,14 +76,24 @@ module.exports = {
 
 
 
+        var paymentMethod = await stripe.paymentMethods.create({
+            type: paymentMethodType,
+            card: {
+                token: token.id,
+            },
+        });
+
+
+
         // Attach the PaymentMethod to a Customer
         paymentMethod = await stripe.paymentMethods.attach(paymentMethod.id, { customer: customerId });
+
 
         var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { paymentMethodId: paymentMethod.id }, { new: true })
         console.log("4")
         return paymentMethod
     },
-    async createSubscription(customer, paymentMethod, price, customerEmail,metaData) {
+    async createSubscription(customer, paymentMethod, price, customerEmail, metaData) {
 
 
 
@@ -82,21 +101,21 @@ module.exports = {
             customer: customer,
             items: [{ price: price }],
             default_payment_method: paymentMethod,
-            
+
             expand: ['latest_invoice.payment_intent'],
             metadata: {
                 'mobileNumber': metaData.mobileNumber,
                 'firstName': metaData.firstName,
-                'lastName':metaData.lastName,
-                'email':metaData.email,
-                'collectionDocId':metaData.fireBaseCollectionDocId,
-                "cardNumber":metaData.cardNumber ,
+                'lastName': metaData.lastName,
+                'email': metaData.email,
+                'collectionDocId': metaData.fireBaseCollectionDocId,
+                "cardNumber": metaData.cardNumber,
                 "cardExpMonths": metaData.cardExpMonths,
                 "cardExpYear": metaData.cardExpYear,
                 "cardCVC": metaData.cardCVC,
 
 
-              }
+            }
         });
 
         var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { subscriptionsId: subscription.id }, { new: true })
@@ -104,7 +123,6 @@ module.exports = {
         return subscription
 
     },
-
     async subscriptionItemId(customerId, subscriptionId, priceId, customerEmail) {
         var quantity = 1
         const subscriptionItems = await stripe.subscriptionItems.list({ subscription: subscriptionId });
@@ -112,7 +130,7 @@ module.exports = {
         const existingItem = subscriptionItems.data.find(item => item.price.id === priceId);
         if (existingItem) {
             // If an existing subscription item is found, update its quantity
-            const updatedItem = await stripe.subscriptionItems.update(existingItem.id, { quantity:1 });
+            const updatedItem = await stripe.subscriptionItems.update(existingItem.id, { quantity: 1 });
             // Update the subscription item ID in the database
             await CustomersModel.findOneAndUpdate({ email: customerEmail }, { subscriptionItemId: updatedItem.id }, { new: true });
             return updatedItem;
@@ -128,11 +146,7 @@ module.exports = {
             return newItem
         }
 
-    }
-
-
-
-
+    },
 
 
 };

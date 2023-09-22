@@ -188,14 +188,6 @@ module.exports = {
 
       var deleteDetails = await CustomersModel.remove({ email: customerEmail })
 
-      // const paymentMethod = await stripe.paymentMethods.update( a.id, {
-      //   metadata: {
-      //     'key1': 'value1',
-      //     'key2': 'value2'
-      //   }
-      // });
-
-
       if (!a) {
         return Helper.response(res, 200, "Failed");
       } else {
@@ -320,7 +312,7 @@ module.exports = {
 
   //     var event = req.body;
 
-    
+
   //     //  var event = {
   //     //   "id": "evt_1ABCDEFGHIJKLMN",
   //     //   "object": "event",
