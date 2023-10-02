@@ -342,8 +342,8 @@ module.exports = {
                     },
                 ],
                 mode: 'subscription',
-                success_url: 'https://yourwebsite.com/success',
-                cancel_url: 'https://yourwebsite.com/cancel',
+                success_url: 'https://rotyseven.com/api/v1/payment-success-page',
+                cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
                 metadata: metaData, // Metadata object with key-value pairs
             });
 

@@ -18,6 +18,9 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const ejs = require('ejs');
+
+
 
 
 
@@ -183,6 +186,25 @@ module.exports = {
       return Helper.response(res, 500, " Server error.");
     }
   },
+
+  paymentSuccessPage: async (req, res) => {
+    try {
+      res.render('success');
+    } catch (err) {
+      console.error('Error rendering template:', err);
+      return Helper.response(res, 500, "Server error.", err);
+    }
+  },
+
+  paymentFaildPage: async (req, res) => {
+    try {
+      res.render('failed');
+    } catch (err) {
+      console.error('Error rendering template:', err);
+      return Helper.response(res, 500, "Server error.", err);
+    }
+  },
+
 
 
 

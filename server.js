@@ -1,6 +1,7 @@
-//importing packages
+
 const express = require('express');
 const app = express();
+const ejs = require('ejs');
 const morgan = require('morgan');
 const cors = require('cors')
 const mongoose = require('mongoose');
@@ -8,21 +9,20 @@ var path = require('path')
 const NODE_ENV = process.env.NODE_ENV || "production";
 require('dotenv').config({ path: '.env.' + NODE_ENV });
 const PORT = process.env.PORT
-console.log(NODE_ENV);
-
-
-
-//add cors policy for fixing cors true
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 
 
 
+app.set('view engine','ejs'); 
+app.engine('ejs', require('ejs').__express);
+app.set('views', path.join(__dirname, './views'));
+
+
+
+
 //import Routes
 const userRoutes = require('./routes/User/UserRoutes');
-
-
-
 app.use(express.json());
 app.use('/api/v1', userRoutes);
 

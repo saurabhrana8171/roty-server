@@ -12,6 +12,9 @@ router.post('/cancel-subscription', UserController.cancelSuscription);
 router.get('/get-subscription-details', UserController.getSuscription);
 router.post('/subscription-update-webhook', UserController.subscriptionUpdate);
 
+router.get('/payment-success-page', UserController.paymentSuccessPage);
+router.get('/payment-failed-page', UserController.paymentFaildPage);
+
 
 
 router.post('/stripe-weebhook', UserController.stripeWebHook);

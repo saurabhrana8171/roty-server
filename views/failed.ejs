@@ -1,0 +1,54 @@
+<!-- payment-failure.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        h1 {
+            color: #e74c3c;
+            /* Red color for indicating failure */
+        }
+
+        .emoji {
+            font-size: 24px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .content {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <h1>Payment Failed</h1>
+        <p>Sorry, there was an issue with your payment, Please try again later. <span class="emoji">😞</span></p>
+        <!-- Add any other dynamic content here, such as error details -->
+    </div>
+</body>
+
+</html>
