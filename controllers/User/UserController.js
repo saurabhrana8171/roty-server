@@ -3,6 +3,7 @@ const CustomersModel = require('../../models/CustomersModel');
 const metaDataModel = require('../../models/metaDataModel');
 const Helper = require('../../config/helper');
 const stripePayment = require('../../config/stripe');
+const mailSender = require('../../config/mailSender');
 const stripkey = process.env.stripe
 const stripe = require('stripe')(stripkey);
 const { initializeApp } = require('firebase/app');
@@ -61,6 +62,8 @@ module.exports = {
 
   createSubscriptionWebhook: async (req, res) => {
     try {
+
+      // console.log(req.body)
       const subscriptionData = req.body.data.object;
       const priceId = subscriptionData.items.data[0].price.id;
       const subscriptionId = subscriptionData.id;
@@ -71,6 +74,7 @@ module.exports = {
       const updatedSubscription = await stripe.subscriptions.update(subscriptionId, { metadata: metaData });
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
 
       if (!subscription) {
         return Helper.response(res, 422, "Data not found");
@@ -90,6 +94,14 @@ module.exports = {
       if (collectionDocId) {
         await updateFirebaseCollectionDoc('users', collectionDocId, data);
       }
+
+      var invoiceId = req.body.data.object.latest_invoice
+
+      if (invoiceId) {
+        const invoice = await stripe.invoices.retrieve(invoiceId);
+        await mailSender.mailSender(metaData.email, invoice.hosted_invoice_url,)
+      }
+
 
       return Helper.response(res, 200, "Save transactions");
     } catch (err) {

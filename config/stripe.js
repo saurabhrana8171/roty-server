@@ -322,7 +322,7 @@ module.exports = {
             const price = await stripe.prices.create({
                 product: product.id,
                 unit_amount_decimal: productPrice * 100,
-                currency: productCurrency,
+                currency: 'aud',
                 recurring: {
                     interval: 'day',
                     interval_count: durationInDays,
