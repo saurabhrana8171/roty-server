@@ -329,7 +329,6 @@ module.exports = {
             //     },
             // });
 
-
             const price = await stripe.prices.create({
                 product: product.id,
                 unit_amount_decimal: productPrice * 100,
@@ -348,7 +347,8 @@ module.exports = {
                         quantity: 1,
                     },
                 ],
-                mode: 'subscription',
+                // mode: 'subscription',
+                mode: 'payment', 
                 success_url: 'https://rotyseven.com/api/v1/payment-success-page',
                 cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
                 metadata: metaData, // Metadata object with key-value pairs
