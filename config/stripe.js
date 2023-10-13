@@ -347,8 +347,8 @@ module.exports = {
                         quantity: 1,
                     },
                 ],
-                // mode: 'subscription',
-                mode: 'payment', 
+                mode: 'subscription',
+                // mode: 'payment', 
                 success_url: 'https://rotyseven.com/api/v1/payment-success-page',
                 cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
                 metadata: metaData, // Metadata object with key-value pairs

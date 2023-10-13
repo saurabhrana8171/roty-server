@@ -71,7 +71,8 @@ module.exports = {
       const getPriceIdMetadata = await metaDataModel.findOne({ priceId: priceId }, { metaData: 1 });
       var metaData = getPriceIdMetadata.metaData[0];
 
-      const updatedSubscription = await stripe.subscriptions.update(subscriptionId, { metadata: metaData });
+
+      const updatedSubscription = await stripe.subscriptions.update(subscriptionId, { metadata: metaData , cancel_at_period_end: true});
 
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
