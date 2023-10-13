@@ -318,22 +318,22 @@ module.exports = {
                 description: `Description of ${productName}`,
             });
 
-            // // Create a price
-            // const price = await stripe.prices.create({
-            //     product: product.id,
-            //     unit_amount_decimal: productPrice * 100,
-            //     currency: 'aud',
-            //     recurring: {
-            //         interval: 'day',
-            //         interval_count: durationInDays,
-            //     },
-            // });
-
+            // Create a price
             const price = await stripe.prices.create({
                 product: product.id,
                 unit_amount_decimal: productPrice * 100,
                 currency: 'aud',
-              });
+                recurring: {
+                    interval: 'day',
+                    interval_count: durationInDays,
+                },
+            });
+
+            // const price = await stripe.prices.create({
+            //     product: product.id,
+            //     unit_amount_decimal: productPrice * 100,
+            //     currency: 'aud',
+            //   });
 
 
 
