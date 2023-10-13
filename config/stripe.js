@@ -313,9 +313,9 @@ module.exports = {
 
             // Create a product
             const product = await stripe.products.create({
-                name: productName,
+                name: 'Roty',
                 type: 'good',
-                description: `Description of ${productName}`,
+                // description: `Description of ${productName}`,
             });
 
             // Create a price
