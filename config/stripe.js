@@ -7,149 +7,6 @@ const metaDataModel = require('../models/metaDataModel');
 
 module.exports = {
 
-    // async createCustomr(customerEmail, customerName) {
-
-
-    //     const customer = await stripe.customers.create({
-    //         description: 'My First Test Customer (created for API docs at https://www.stripe.com/docs/api)',
-    //         email: customerEmail,
-    //         name: customerName,
-    //     });
-
-    //     var exist = await CustomersModel.exists({ email: customerEmail })
-    //     if (exist) {
-    //         var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { customerId: customer.id }, { new: true })
-    //     } else {
-    //         var update = await new CustomersModel({ email: customerEmail, customerId: customer.id }).save()
-    //     }
-    //     // console.log("1")
-    //     return customer
-    // },
-    // async createProduct(productName, customerEmail) {
-
-    //     const product = await stripe.products.create({
-    //         name: productName,
-    //         type: 'good',
-    //         description: 'A description of my product',
-    //         attributes: ['size', 'color'],
-    //     });
-
-    //     var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { productsId: product.id }, { new: true })
-    //     // console.log("2")
-    //     return product
-    // },
-    // async createPrice(productID, productPrice, productCurrency, customerEmail, durationInDays) {
-
-    //     const price = await stripe.prices.create({
-    //         unit_amount_decimal: productPrice,
-    //         currency: productCurrency,
-    //         recurring: {
-    //             interval: 'day', // Set the interval to 'day' for daily subscription
-    //             interval_count: durationInDays, // Set the duration in days
-    //         },
-    //         product: productID,
-    //     });
-
-    //     var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { priceId: price.id }, { new: true })
-    //     // console.log(price.id, "3")
-    //     return price
-
-    // },
-    // async paymentMethod(customerId, paymentMethodType, cardNumber, cardExpMonths, cardExpYear, cardCVC, customerEmail) {
-
-    //     // var paymentMethod = await stripe.paymentMethods.create({
-    //     //     type: paymentMethodType,
-    //     //     card: {
-    //     //         number: cardNumber,
-    //     //         exp_month: cardExpMonths,
-    //     //         exp_year: cardExpYear,
-    //     //         cvc: cardCVC,
-    //     //     },
-    //     // });
-
-    //     const token = await stripe.tokens.create({
-    //         card: {
-    //             number: cardNumber,
-    //             exp_month: cardExpMonths,
-    //             exp_year: cardExpYear,
-    //             cvc: cardCVC,
-    //         },
-    //     });
-
-
-
-    //     var paymentMethod = await stripe.paymentMethods.create({
-    //         type: paymentMethodType,
-    //         card: {
-    //             token: token.id,
-    //         },
-    //     });
-
-
-
-    //     // Attach the PaymentMethod to a Customer
-    //     paymentMethod = await stripe.paymentMethods.attach(paymentMethod.id, { customer: customerId });
-
-
-    //     var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { paymentMethodId: paymentMethod.id }, { new: true })
-    //     console.log("4")
-    //     return paymentMethod
-    // },
-    // async createSubscription(customer, paymentMethod, price, customerEmail, metaData) {
-
-
-
-    //     const subscription = await stripe.subscriptions.create({
-    //         customer: customer,
-    //         items: [{ price: price }],
-    //         default_payment_method: paymentMethod,
-
-    //         expand: ['latest_invoice.payment_intent'],
-    //         metadata: {
-    //             'mobileNumber': metaData.mobileNumber,
-    //             'firstName': metaData.firstName,
-    //             'lastName': metaData.lastName,
-    //             'email': metaData.email,
-    //             'collectionDocId': metaData.fireBaseCollectionDocId,
-    //             "cardNumber": metaData.cardNumber,
-    //             "cardExpMonths": metaData.cardExpMonths,
-    //             "cardExpYear": metaData.cardExpYear,
-    //             "cardCVC": metaData.cardCVC,
-
-
-    //         }
-    //     });
-
-    //     var update = await CustomersModel.findOneAndUpdate({ email: customerEmail }, { subscriptionsId: subscription.id }, { new: true })
-    //     // console.log("5")
-    //     return subscription
-
-    // },
-    // async subscriptionItemId(customerId, subscriptionId, priceId, customerEmail) {
-    //     var quantity = 1
-    //     const subscriptionItems = await stripe.subscriptionItems.list({ subscription: subscriptionId });
-    //     // Check if a subscription item with the same price ID already exists
-    //     const existingItem = subscriptionItems.data.find(item => item.price.id === priceId);
-    //     if (existingItem) {
-    //         // If an existing subscription item is found, update its quantity
-    //         const updatedItem = await stripe.subscriptionItems.update(existingItem.id, { quantity: 1 });
-    //         // Update the subscription item ID in the database
-    //         await CustomersModel.findOneAndUpdate({ email: customerEmail }, { subscriptionItemId: updatedItem.id }, { new: true });
-    //         return updatedItem;
-    //     } else {
-    //         // If no existing subscription item is found, create a new one
-    //         const newItem = await stripe.subscriptionItems.create({
-    //             subscription: subscriptionId,
-    //             price: priceId,
-    //             quantity: 1
-    //         });
-    //         // Update the subscription item ID in the database
-    //         await CustomersModel.findOneAndUpdate({ email: customerEmail }, { subscriptionItemId: newItem.id }, { new: true });
-    //         return newItem
-    //     }
-
-    // },
-
     async createCustomr(customerEmail, customerName) {
         try {
             const customer = await stripe.customers.create({
@@ -339,6 +196,80 @@ module.exports = {
 
             // Create a payment link with metadata
             const session = await stripe.checkout.sessions.create({
+                customer: customer.id,
+                payment_method_types: [paymentMethodType],
+                line_items: [
+                    {
+                        price: price.id,
+                        quantity: 1,
+                    },
+                ],
+                mode: 'subscription',
+                // mode: 'payment', 
+                success_url: 'https://rotyseven.com/api/v1/payment-success-page',
+                cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
+                metadata: metaData, // Metadata object with key-value pairs
+            });
+
+            var saveDetailsMetadata = await new metaDataModel({
+                priceId: price.id,
+                metaData: metaData
+            }).save()
+            return session.url; // Return the payment link
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    },
+
+    //======================================================test===================================================================================
+    async createSubscriptionAndReturnLinkTest(req) {
+        try {
+
+            const stripeTest = require('stripe')('sk_test_51L7cYUHELCnzH5PnHeluZorxNG8T0ne5hueuhgBnLqPp0c3XJuvnEXN2seVSDGQSxA9gQx81bIOn5pfFXMx8tV6p00FElUAJMa');
+            const {
+                customerEmail,
+                customerName,
+                productName,
+                productPrice,
+                productCurrency,
+                paymentMethodType,
+                durationInDays,
+                metaData
+            } = req.body;
+
+
+            // Create a customer
+            const customer = await stripeTest.customers.create({ email: customerEmail, name: customerName, });
+
+            // Create a product
+            const product = await stripeTest.products.create({
+                name: 'Roty',
+                type: 'good',
+                // description: `Description of ${productName}`,
+            });
+
+            // Create a price
+            const price = await stripeTest.prices.create({
+                product: product.id,
+                unit_amount_decimal: productPrice * 100,
+                currency: 'aud',
+                recurring: {
+                    interval: 'day',
+                    interval_count: durationInDays,
+                },
+            });
+
+            // const price = await stripeTest.prices.create({
+            //     product: product.id,
+            //     unit_amount_decimal: productPrice * 100,
+            //     currency: 'aud',
+            //   });
+
+
+
+            // Create a payment link with metadata
+            const session = await stripeTest.checkout.sessions.create({
                 customer: customer.id,
                 payment_method_types: [paymentMethodType],
                 line_items: [

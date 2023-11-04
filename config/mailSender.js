@@ -30,6 +30,7 @@ module.exports = {
             console.log('Email sent:', info.response);
             return  // Return the payment link
         } catch (error) {
+            return
             console.error('Error:', error);
             throw error;
         }

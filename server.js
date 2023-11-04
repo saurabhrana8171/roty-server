@@ -71,15 +71,3 @@ app.listen(PORT, () => {
     console.log("server is running on", PORT)
 });
 
-
-
-
-
-
-// db.createUser(
-//     {
-//         user: "roty-server",
-//         pwd: "rotyserverhash",
-//         roles: [ { role: "root", db: "admin" }, "readWriteAnyDatabase" ]
-//     }
-// )

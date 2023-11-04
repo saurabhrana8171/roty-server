@@ -14,6 +14,7 @@ const metaDataSchema = new Schema({
 
     priceId: { type: String, default: "" },
     metaData: [],
+    status: { type: Boolean, default: false},
     createdDate: { type: Date, default: Date.now },
 
 })
