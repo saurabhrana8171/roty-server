@@ -11,7 +11,7 @@ module.exports = {
                 service: 'gmail',
                 auth: {
                     user: 'rotyseven@gmail.com',
-                    pass: `qegbbsacelcieybd`
+                    pass: `rotuxmkmnmnnkqcg`
                 }
             });
 
