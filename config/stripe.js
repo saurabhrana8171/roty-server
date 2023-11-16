@@ -162,9 +162,15 @@ module.exports = {
                 productCurrency,
                 paymentMethodType,
                 durationInDays,
-                metaData
+                metaData,
+                mode
             } = req.body;
 
+
+            var successUrl = 'https://rotyseven.com/api/v1/payment-success-page'
+            if(mode==="web"){
+                successUrl = 'https://rotyseven.com/dashboard/home'
+            }
             // Create a customer
             const customer = await stripe.customers.create({ email: customerEmail, name: customerName, });
 
@@ -206,7 +212,7 @@ module.exports = {
                 ],
                 mode: 'subscription',
                 // mode: 'payment', 
-                success_url: 'https://rotyseven.com/api/v1/payment-success-page',
+                success_url:successUrl ,
                 cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
                 metadata: metaData, // Metadata object with key-value pairs
             });
@@ -238,6 +244,10 @@ module.exports = {
                 metaData
             } = req.body;
 
+            var successUrl = 'https://rotyseven.com/api/v1/payment-success-page'
+            if(mode==="web"){
+                successUrl = 'https://rotyseven.com/dashboard/home'
+            }
 
             // Create a customer
             const customer = await stripeTest.customers.create({ email: customerEmail, name: customerName, });
@@ -280,7 +290,7 @@ module.exports = {
                 ],
                 mode: 'subscription',
                 // mode: 'payment', 
-                success_url: 'https://rotyseven.com/api/v1/payment-success-page',
+                success_url: successUrl,
                 cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
                 metadata: metaData, // Metadata object with key-value pairs
             });

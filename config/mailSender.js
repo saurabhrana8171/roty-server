@@ -4,7 +4,7 @@ const nodemailer = require('nodemailer');
 
 module.exports = {
 
-    async mailSender(email, link) {
+    async mailSender(email, otp) {
         try {
             // Create a transporter object
             const transporter = nodemailer.createTransport({
