@@ -241,7 +241,8 @@ module.exports = {
                 productCurrency,
                 paymentMethodType,
                 durationInDays,
-                metaData
+                metaData,
+                mode
             } = req.body;
 
             var successUrl = 'https://rotyseven.com/api/v1/payment-success-page'
