@@ -248,7 +248,7 @@ module.exports = {
             var successUrl = 'https://rotyseven.com/api/v1/payment-success-page'
             if(mode==="web"){
                 // successUrl = 'https://rotyseven.com/dashboard/home'
-                successUrl = 'https://roty7.com/dashboard/home'
+                successUrl = 'https://roty7.com/#/dashboard/home'
             }
 
             // Create a customer
