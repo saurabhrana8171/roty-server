@@ -247,11 +247,11 @@ module.exports = {
 
             var successUrl = 'https://rotyseven.com/api/v1/payment-success-page'
             var cancelUrl = 'https://rotyseven.com/api/v1/payment-failed-page'
-            // if(mode==="web"){
-            //     // successUrl = 'https://rotyseven.com/dashboard/home'
-            //     successUrl = 'https://roty7.com/#/payment-sucess'
-            //     cancelUrl = 'https://roty7.com/#/payment-failed'
-            // }
+            if(mode==="web"){
+                // successUrl = 'https://rotyseven.com/dashboard/home'
+                successUrl = 'https://roty7.com/#/payment-sucess'
+                cancelUrl = 'https://roty7.com/#/payment-failed'
+            }
 
             // Create a customer
             const customer = await stripeTest.customers.create({ email: customerEmail, name: customerName, });
