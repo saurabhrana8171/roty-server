@@ -24,7 +24,7 @@ app.set('views', path.join(__dirname, './views'));
 //import Routes
 const userRoutes = require('./routes/User/UserRoutes');
 app.use(express.json());
-app.use('/api/v1', userRoutes);
+app.use('/v1', userRoutes);
 
 app.use(express.static(path.join(__dirname, '/public')));
 
