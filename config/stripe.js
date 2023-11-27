@@ -167,7 +167,7 @@ module.exports = {
             } = req.body;
 
 
-            var successUrl = 'https://rotyseven.com/api/v1/payment-success-page'
+            var successUrl = 'https://rotyseven.com/api/v1/payment-success'
             if(mode==="web"){
                 successUrl = 'https://rotyseven.com/dashboard/home'
             }
@@ -212,8 +212,8 @@ module.exports = {
                 ],
                 mode: 'subscription',
                 // mode: 'payment', 
-                success_url:successUrl ,
-                cancel_url: 'https://rotyseven.com/api/v1/payment-failed-page',
+                success_url:'https://rotyseven.com/#/payment-success' ,
+                cancel_url: 'https://rotyseven.com/#/payment-failed',
                 metadata: metaData, // Metadata object with key-value pairs
             });
 
@@ -294,8 +294,8 @@ module.exports = {
                 ],
                 mode: 'subscription',
                 // mode: 'payment', 
-                success_url: successUrl,
-                cancel_url: cancelUrl,
+                success_url:'https://rotyseven.com/#/payment-success' ,
+                cancel_url: 'https://rotyseven.com/#/payment-failed',
                 metadata: metaData, // Metadata object with key-value pairs
             });
 
